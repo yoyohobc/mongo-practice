@@ -12,7 +12,9 @@ app.config["DEBUG"] = True
 
 myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 mydb = myclient["users"]
-mycol = mydb["account"]
+mycol = mydb["accounts"]
+#def check_request_user(request_data):
+
 @app.route('/', methods=['GET'])
 def home():
     return "<h1>Hello Flask!</h1>"
@@ -66,12 +68,22 @@ def User_login():
 
 @app.route('/users', methods=['POST'])
 def create_User():
-    request_data = request.json
-    mycol.insert_one(request_data)
+    request_data = request.get_json()
+    #確認request的兩個key都有帶
+    if ('account' in request_data) and ('password' in request_data):
+        #request_account = request_data.get('account')
+        insert_data = {'account':request_data.get('account'),'password':request_data.get('password')}
+    else:
+        return jsonify("錯誤!沒有帳號密碼欄位")
 
-    result = mycol.find_one({'_id':request_data['_id']})
 
-    return make_response(jsonify(result))
+    mycol.insert_one(insert_data)
+
+    result = mycol.find_one({'account':request_data['account']})
+
+    result.pop('_id')
+
+    return jsonify(result)
 
 @app.route('/users/<int:id>', methods=['PATCH'])
 def update_users(id):
